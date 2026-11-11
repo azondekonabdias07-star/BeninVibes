@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111827">
+    <title>BeninVibes — Événements au Bénin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            yellow: '#FFB800',
+                            black: '#121212',
+                            green: '#008751',
+                            red: '#E31B23'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        html, body { scrollbar-width: none; }
+        html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+        body { min-height: 100vh; }
+        .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-900 antialiased">
+    <header class="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2.5 sm:px-6">
+            <button type="button" onclick="go('discover')" class="flex shrink-0 items-center" aria-label="BeninVibes, accueil">
+                <img src="assets/beninvibes-logo.jpeg" class="h-14 w-[5.25rem] object-contain" alt="Logo BeninVibes">
+            </button>
+            <nav class="hidden items-center gap-1 md:flex" aria-label="Navigation principale">
+                <button class="nav-button rounded-lg px-4 py-2 text-sm font-semibold" data-screen="discover" onclick="go('discover')">Découvrir</button>
+                <button class="nav-button rounded-lg px-4 py-2 text-sm font-semibold" data-screen="favorites" onclick="go('favorites')">Favoris</button>
+                <button class="nav-button rounded-lg px-4 py-2 text-sm font-semibold" data-screen="tickets" onclick="go('tickets')">Mes billets</button>
+                <button class="nav-button rounded-lg px-4 py-2 text-sm font-semibold" data-screen="profile" onclick="go('profile')">Mon profil</button>
+            </nav>
+            <button type="button" onclick="showToast('Vous êtes à jour : aucune nouvelle notification.')" class="relative flex h-10 w-10 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100" aria-label="Notifications">
+                <i class="fa-regular fa-bell text-lg"></i>
+                <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand-red"></span>
+            </button>
+        </div>
+    </header>
+
+    <main id="app" class="mx-auto min-h-[calc(100vh-76px)] max-w-7xl px-4 pb-24 pt-5 sm:px-6 md:pb-10"></main>
+
+    <nav class="safe-bottom fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-gray-200 bg-white px-2 pt-2 md:hidden" aria-label="Navigation mobile">
+        <button class="nav-button flex min-w-16 flex-col items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold" data-screen="discover" onclick="go('discover')"><i class="fa-regular fa-compass text-lg"></i><span>Découvrir</span></button>
+        <button class="nav-button flex min-w-16 flex-col items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold" data-screen="favorites" onclick="go('favorites')"><i class="fa-regular fa-heart text-lg"></i><span>Favoris</span></button>
+        <button class="nav-button flex min-w-16 flex-col items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold" data-screen="tickets" onclick="go('tickets')"><i class="fa-solid fa-ticket text-lg"></i><span>Billets</span></button>
+        <button class="nav-button flex min-w-16 flex-col items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold" data-screen="profile" onclick="go('profile')"><i class="fa-regular fa-user text-lg"></i><span>Profil</span></button>
+    </nav>
+
+    <div id="toast" class="pointer-events-none fixed bottom-24 left-1/2 z-50 hidden -translate-x-1/2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white shadow-xl md:bottom-6" role="status" aria-live="polite"></div>
+    <div id="modal-root"></div>
+
+    <script>
+        const events = [
+            {
+                id: 'vodun-ouidah',
+                title: 'Festival Vodun Ouidah',
+                date: '20 décembre · 14:00 – 23:00',
+                location: 'Forêt Sacrée, Ouidah',
+                city: 'Ouidah',
+                category: 'Festival',
+                priceStandard: 5000,
+                priceVip: 15000,
+                image: 'https://images.unsplash.com/photo-1543807535-eceef0bc6599?auto=format&fit=crop&w=1200&q=85',
+                description: 'Plongez au cœur des traditions Vodun lors de ce festival culturel authentique. Musique, danses traditionnelles, cérémonies et artisanat local vous attendent pour une expérience unique au Bénin.'
+            },
+            {
+                id: 'masques-portonovo',
+                title: 'Festival des Masques de Porto-Novo',
+                date: '24 décembre · 09:00 – 18:00',
+                location: 'Place du Bénin, Porto-Novo',
+                city: 'Porto-Novo',
+                category: 'Culture',
+                priceStandard: 3000,
+                priceVip: 10000,
+                image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=85',
+                description: 'Une grande célébration du patrimoine ancestral et des masques sacrés de la ville capitale.'
+            },
+            {
+                id: 'concert-cotonou',
+                title: 'Concert AfroBeat Live',
+                date: '12 décembre · 20:00 – 04:00',
+                location: 'Stade de l’Amitié, Cotonou',
+                city: 'Cotonou',
+                category: 'Concert',
+                priceStandard: 8000,
+                priceVip: 20000,
+                image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=85',
+                description: 'Les grands artistes de la scène AfroBeat béninoise et internationale réunis pour une nuit inoubliable.'
+            },
+            {
+                id: 'nuit-parakou',
+                title: 'La Nuit des Cultures',
+                date: '28 décembre · 18:00 – 02:00',
+                location: 'Place Tabéra, Parakou',
+                city: 'Parakou',
+                category: 'Concert',
+                priceStandard: 2500,
+                priceVip: 7500,
+                image: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=1200&q=85',
+                description: 'Une soirée festive autour des musiques, danses et saveurs du nord du Bénin.'
+            },
+            {
+                id: 'artisanat-abomey',
+                title: 'Marché des Arts et de l’Artisanat',
+                date: '05 janvier · 10:00 – 19:00',
+                location: 'Palais royaux, Abomey',
+                city: 'Abomey',
+                category: 'Culture',
+                priceStandard: 1500,
+                priceVip: 5000,
+                image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=85',
+                description: 'Découvrez les créations des artisans locaux, les spécialités du terroir et les traditions d’Abomey.'
+            }
+        ];
+
+        const storageKey = 'beninvibes-client-prototype-v1';
+        const defaultState = {
+            screen: 'discover',
+            selectedCity: 'Toutes les villes',
+            selectedCategory: 'Tous',
+            search: '',
+            selectedEventId: null,
+            ticketType: 'Standard',
+            quantity: 1,
+            customerName: 'Tamingnon Darios',
+            customerPhone: '+229 97 12 34 56',
+            paymentMethod: 'MTN Mobile Money',
+            favorites: [],
+            tickets: [],
+            organizerRequest: false,
+            notificationsEnabled: true
+        };
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(storageKey);
+                return saved ? { ...defaultState, ...JSON.parse(saved) } : { ...defaultState };
+            } catch (error) {
+                console.error('Impossible de charger les données du prototype client.', error);
+                return { ...defaultState };
+            }
+        }
+
+        const state = loadState();
+        let toastTimer;
+
+        function saveState() {
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(state));
+            } catch (error) {
+                console.error('Impossible d’enregistrer les données du prototype client.', error);
+                showToast('Enregistrement local indisponible dans ce navigateur.');
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, character => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[character]);
+        }
+
+        function money(amount) {
+            return `${Number(amount).toLocaleString('fr-FR')} FCFA`;
+        }
+
+        function selectedEvent() {
+            return events.find(event => event.id === state.selectedEventId) || null;
+        }
+
+        function go(screen, eventId = null) {
+            if (eventId) {
+                state.selectedEventId = eventId;
+                state.ticketType = 'Standard';
+                state.quantity = 1;
+            }
+            state.screen = screen;
+            saveState();
+            render();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hidden');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function toggleFavorite(eventId) {
+            state.favorites = state.favorites.includes(eventId)
+                ? state.favorites.filter(id => id !== eventId)
+                : [...state.favorites, eventId];
+            saveState();
+            render();
+        }
+
+        function filteredEvents() {
+            const query = state.search.trim().toLocaleLowerCase('fr');
+            return events.filter(event => {
+                const matchesCity = state.selectedCity === 'Toutes les villes' || event.city === state.selectedCity;
+                const matchesCategory = state.selectedCategory === 'Tous' || event.category === state.selectedCategory;
+                const searchable = `${event.title} ${event.location} ${event.city} ${event.category}`.toLocaleLowerCase('fr');
+                return matchesCity && matchesCategory && searchable.includes(query);
+            });
+        }
+
+        function eventCard(event) {
+            const favorite = state.favorites.includes(event.id);
+            return `
+                <article class="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+                    <div class="relative">
+                        <button type="button" class="block w-full text-left" onclick="go('detail', '${event.id}')">
+                            <img src="${event.image}" alt="${escapeHtml(event.title)}" class="h-48 w-full object-cover transition duration-500 group-hover:scale-[1.02]" loading="lazy">
+                        </button>
+                        <span class="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-gray-800">${event.category}</span>
+                        <button type="button" onclick="toggleFavorite('${event.id}')" class="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-lg ${favorite ? 'text-brand-red' : 'text-gray-500'}" aria-label="${favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
+                            <i class="${favorite ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                        </button>
+                    </div>
+                    <button type="button" onclick="go('detail', '${event.id}')" class="block w-full p-4 text-left">
+                        <p class="text-xs font-semibold text-gray-500"><i class="fa-regular fa-calendar mr-1 text-brand-yellow"></i>${event.date}</p>
+                        <h3 class="mt-2 line-clamp-2 text-base font-black">${escapeHtml(event.title)}</h3>
+                        <p class="mt-1 truncate text-sm text-gray-500"><i class="fa-solid fa-location-dot mr-1 text-brand-red"></i>${escapeHtml(event.location)}</p>
+                        <div class="mt-4 flex items-center justify-between">
+                            <span class="text-sm font-black text-brand-green">Dès ${money(event.priceStandard)}</span>
+                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-amber-50 text-gray-900"><i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </button>
+                </article>`;
+        }
+
+        function renderEventList(list) {
+            if (!list.length) {
+                return `<div class="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white px-5 py-12 text-center">
+                    <i class="fa-regular fa-calendar-xmark text-3xl text-gray-300"></i>
+                    <h3 class="mt-3 font-bold">Aucun événement trouvé</h3>
+                    <p class="mt-1 text-sm text-gray-500">Modifiez vos filtres ou votre recherche.</p>
+                    <button onclick="resetFilters()" class="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-bold text-white">Effacer les filtres</button>
+                </div>`;
+            }
+            return list.map(eventCard).join('');
+        }
+
+        function renderDiscover() {
+            const cities = ['Toutes les villes', 'Cotonou', 'Porto-Novo', 'Parakou', 'Ouidah', 'Abomey'];
+            const categories = ['Tous', 'Festival', 'Concert', 'Culture'];
+            const feature = events[0];
+            return `
+                <section class="relative overflow-hidden rounded-3xl bg-gray-900 shadow-xl">
+                    <img src="${feature.image}" alt="" class="absolute inset-0 h-full w-full object-cover opacity-50">
+                    <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent"></div>
+                    <div class="relative max-w-2xl px-6 py-10 text-white sm:px-10 sm:py-14">
+                        <span class="rounded-full bg-brand-yellow px-3 py-1 text-xs font-black uppercase tracking-wide text-gray-900">À la une</span>
+                        <h1 class="mt-4 text-3xl font-black leading-tight sm:text-5xl">Vivez le Bénin.<br>Vibrez ensemble.</h1>
+                        <p class="mt-3 max-w-lg text-sm text-gray-200 sm:text-base">Découvrez les événements qui font battre le cœur du pays et réservez vos places en quelques instants.</p>
+                        <button onclick="go('detail', '${feature.id}')" class="mt-6 rounded-xl bg-brand-yellow px-5 py-3 text-sm font-black text-gray-900 transition hover:bg-yellow-400">Découvrir le festival <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                    </div>
+                </section>
+
+                <section class="mt-8">
+                    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-[0.18em] text-brand-green">L’agenda culturel</p>
+                            <h2 class="mt-1 text-2xl font-black sm:text-3xl">Trouvez votre prochain événement</h2>
+                        </div>
+                        <label class="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:max-w-sm">
+                            <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+                            <input id="event-search" value="${escapeHtml(state.search)}" type="search" placeholder="Événement, ville, catégorie…" class="w-full bg-transparent text-sm outline-none" oninput="updateSearch(this.value)">
+                        </label>
+                    </div>
+
+                    <div class="no-scrollbar mt-5 flex gap-2 overflow-x-auto pb-1">
+                        ${cities.map(city => `<button onclick="setCity('${city}')" class="shrink-0 rounded-full px-4 py-2 text-sm font-bold ${state.selectedCity === city ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-100'}">${city}</button>`).join('')}
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        ${categories.map(category => `<button onclick="setCategory('${category}')" class="rounded-lg px-3 py-1.5 text-xs font-bold ${state.selectedCategory === category ? 'bg-amber-100 text-gray-900' : 'bg-transparent text-gray-500 hover:bg-white'}">${category}</button>`).join('')}
+                    </div>
+
+                    <div class="mt-5 flex items-center justify-between">
+                        <h3 class="text-lg font-black">À découvrir</h3>
+                        <span data-event-count class="text-sm text-gray-500">${filteredEvents().length} événement(s)</span>
+                    </div>
+                    <div id="event-grid" class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">${renderEventList(filteredEvents())}</div>
+                </section>`;
+        }
+
+        function renderDetail() {
+            const event = selectedEvent();
+            if (!event) return renderDiscover();
+            const price = state.ticketType === 'VIP' ? event.priceVip : event.priceStandard;
+            const favorite = state.favorites.includes(event.id);
+            return `
+                <div class="mx-auto max-w-5xl">
+                    <button onclick="go('discover')" class="mb-4 inline-flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-gray-900"><i class="fa-solid fa-arrow-left"></i> Retour aux événements</button>
+                    <div class="overflow-hidden rounded-3xl bg-white shadow-sm">
+                        <div class="relative">
+                            <img src="${event.image}" alt="${escapeHtml(event.title)}" class="h-64 w-full object-cover sm:h-[26rem]">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                            <span class="absolute bottom-5 left-5 rounded-full bg-brand-yellow px-3 py-1 text-xs font-black">${event.category}</span>
+                            <button onclick="shareEvent('${event.id}')" class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-800" aria-label="Partager l’événement"><i class="fa-solid fa-share-nodes"></i></button>
+                        </div>
+                        <div class="grid gap-8 p-5 sm:p-8 lg:grid-cols-[1fr_19rem]">
+                            <div>
+                                <h1 class="text-2xl font-black sm:text-3xl">${escapeHtml(event.title)}</h1>
+                                <div class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-600">
+                                    <span><i class="fa-regular fa-calendar mr-2 text-brand-yellow"></i>${event.date}</span>
+                                    <span><i class="fa-solid fa-location-dot mr-2 text-brand-red"></i>${escapeHtml(event.location)}</span>
+                                </div>
+                                <div class="mt-6 rounded-2xl bg-gray-50 p-4">
+                                    <h2 class="font-black">À propos de l’événement</h2>
+                                    <p class="mt-2 text-sm leading-6 text-gray-600">${escapeHtml(event.description)}</p>
+                                </div>
+                                <div class="mt-4 flex items-center gap-3 rounded-2xl border border-gray-100 p-4">
+                                    <span class="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-brand-red"><i class="fa-solid fa-location-dot"></i></span>
+                                    <div><p class="text-xs font-semibold uppercase text-gray-400">Lieu</p><p class="text-sm font-bold">${escapeHtml(event.location)}</p></div>
+                                    <span class="ml-auto text-xs text-gray-400">Bénin</span>
+                                </div>
+                            </div>
+                            <aside class="h-fit rounded-2xl border border-gray-200 p-4">
+                                <h2 class="font-black">Choisissez votre billet</h2>
+                                <div class="mt-4 space-y-2">
+                                    ${['Standard', 'VIP'].map(type => {
+                                        const ticketPrice = type === 'VIP' ? event.priceVip : event.priceStandard;
+                                        const active = state.ticketType === type;
+                                        return `<button onclick="selectTicket('${type}')" class="flex w-full items-center justify-between rounded-xl border-2 p-3 text-left ${active ? 'border-brand-yellow bg-amber-50/50' : 'border-gray-100 hover:border-gray-300'}">
+                                            <span><span class="block text-sm font-black">${type}</span><span class="mt-1 block text-[11px] text-gray-500">${type === 'VIP' ? 'Zone réservée · Accès privilégié' : 'Accès général'}</span></span>
+                                            <span class="text-sm font-black text-brand-green">${money(ticketPrice)}</span>
+                                        </button>`;
+                                    }).join('')}
+                                </div>
+                                <div class="mt-4 flex items-center justify-between rounded-xl bg-gray-50 p-3">
+                                    <span class="text-sm font-semibold">Quantité</span>
+                                    <div class="flex items-center gap-3">
+                                        <button onclick="changeQuantity(-1)" class="h-8 w-8 rounded-full bg-white font-black shadow-sm" aria-label="Retirer un billet">−</button>
+                                        <span class="min-w-4 text-center font-black">${state.quantity}</span>
+                                        <button onclick="changeQuantity(1)" class="h-8 w-8 rounded-full bg-white font-black shadow-sm" aria-label="Ajouter un billet">+</button>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex justify-between text-sm"><span class="text-gray-500">Sous-total</span><strong>${money(price * state.quantity)}</strong></div>
+                                <button onclick="go('checkout')" class="mt-4 w-full rounded-xl bg-brand-yellow px-4 py-3 font-black text-gray-900 hover:bg-yellow-400">Continuer</button>
+                                <button onclick="toggleFavorite('${event.id}')" class="mt-3 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50">
+                                    <i class="${favorite ? 'fa-solid text-brand-red' : 'fa-regular'} fa-heart mr-2"></i>${favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                                </button>
+                            </aside>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function renderCheckout() {
+            const event = selectedEvent();
+            if (!event) return renderDiscover();
+            const price = state.ticketType === 'VIP' ? event.priceVip : event.priceStandard;
+            const subtotal = price * state.quantity;
+            const fee = 500 * state.quantity;
+            const methods = ['MTN Mobile Money', 'Moov Money', 'Carte Visa / Mastercard'];
+            return `
+                <div class="mx-auto max-w-4xl">
+                    <button onclick="go('detail')" class="mb-4 inline-flex items-center gap-2 text-sm font-bold text-gray-600"><i class="fa-solid fa-arrow-left"></i> Retour à l’événement</button>
+                    <h1 class="text-2xl font-black">Finaliser ma réservation</h1>
+                    <p class="mt-1 text-sm text-gray-500">Vos billets seront disponibles dans votre espace après confirmation.</p>
+                    <form onsubmit="submitPayment(event)" class="mt-6 grid gap-5 lg:grid-cols-[1fr_20rem]">
+                        <div class="space-y-5">
+                            <section class="rounded-2xl border border-gray-200 bg-white p-5">
+                                <h2 class="font-black"><span class="mr-2 text-brand-yellow">01</span>Vos coordonnées</h2>
+                                <label class="mt-4 block text-sm font-semibold">Nom complet
+                                    <input id="customer-name" required minlength="2" value="${escapeHtml(state.customerName)}" oninput="state.customerName=this.value" class="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-3 outline-none focus:border-brand-yellow">
+                                </label>
+                                <label class="mt-4 block text-sm font-semibold">Téléphone Mobile Money
+                                    <input id="customer-phone" required minlength="8" value="${escapeHtml(state.customerPhone)}" oninput="state.customerPhone=this.value" class="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-3 outline-none focus:border-brand-yellow" placeholder="+229 97 00 00 00">
+                                </label>
+                            </section>
+                            <section class="rounded-2xl border border-gray-200 bg-white p-5">
+                                <h2 class="font-black"><span class="mr-2 text-brand-yellow">02</span>Méthode de paiement</h2>
+                                <div class="mt-4 space-y-2">
+                                    ${methods.map((method, index) => `<label class="flex cursor-pointer items-center gap-3 rounded-xl border p-3 ${state.paymentMethod === method ? 'border-brand-green bg-emerald-50/50' : 'border-gray-200'}">
+                                        <input type="radio" name="payment-method" value="${method}" ${state.paymentMethod === method ? 'checked' : ''} onchange="state.paymentMethod=this.value" class="accent-green-700">
+                                        <span class="flex-1 text-sm font-bold">${method}</span>
+                                        ${index === 0 ? '<span class="rounded-full bg-brand-green px-2 py-1 text-[10px] font-black text-white">Rapide</span>' : ''}
+                                    </label>`).join('')}
+                                </div>
+                                <p class="mt-4 rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-900"><i class="fa-solid fa-circle-info mr-1"></i> Prototype : aucun paiement réel ne sera effectué. Cette étape simule la confirmation.</p>
+                            </section>
+                        </div>
+                        <aside class="h-fit rounded-2xl border border-gray-200 bg-white p-5">
+                            <h2 class="font-black">Résumé de la commande</h2>
+                            <div class="mt-4 flex gap-3">
+                                <img src="${event.image}" alt="" class="h-16 w-16 rounded-lg object-cover">
+                                <div class="min-w-0"><p class="font-bold">${escapeHtml(event.title)}</p><p class="mt-1 text-xs text-gray-500">${state.ticketType} · ${state.quantity} billet(s)</p></div>
+                            </div>
+                            <div class="mt-5 space-y-3 border-t border-gray-100 pt-4 text-sm">
+                                <div class="flex justify-between"><span class="text-gray-500">Billets</span><span>${money(subtotal)}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Frais de service</span><span>${money(fee)}</span></div>
+                                <div class="flex justify-between border-t border-gray-100 pt-3 text-base font-black"><span>Total</span><span>${money(subtotal + fee)}</span></div>
+                            </div>
+                            <button type="submit" class="mt-5 w-full rounded-xl bg-brand-yellow px-4 py-3 font-black hover:bg-yellow-400">Confirmer · ${money(subtotal + fee)}</button>
+                            <p class="mt-3 text-center text-[11px] text-gray-400"><i class="fa-solid fa-lock mr-1"></i>Vos informations restent sur cet appareil.</p>
+                        </aside>
+                    </form>
+                </div>`;
+        }
+
+        function ticketCard(ticket) {
+            const event = events.find(item => item.id === ticket.eventId);
+            if (!event) return '';
+            const qrData = encodeURIComponent(`BENINVIBES:${ticket.id}`);
+            return `<article class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center">
+                    <img src="${event.image}" alt="" class="h-28 w-full rounded-xl object-cover sm:w-36">
+                    <div class="min-w-0 flex-1">
+                        <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-brand-green">Confirmé</span>
+                        <h2 class="mt-2 text-lg font-black">${escapeHtml(event.title)}</h2>
+                        <p class="mt-1 text-sm text-gray-500">${event.date} · ${escapeHtml(event.location)}</p>
+                        <p class="mt-2 font-mono text-xs text-gray-500">${ticket.id} · ${ticket.type} × ${ticket.quantity}</p>
+                        <p class="mt-1 text-sm font-bold">${money(ticket.total)}</p>
+                    </div>
+                    <div class="flex items-center gap-4 sm:flex-col">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qrData}" alt="QR code du billet ${ticket.id}" class="h-24 w-24 rounded-lg border border-gray-100 p-1">
+                        <button onclick="showToast('Présentez ce QR code à l’entrée de l’événement.')" class="text-xs font-bold text-brand-green">Afficher le billet</button>
+                    </div>
+                </div>
+            </article>`;
+        }
+
+        function renderTickets() {
+            return `<div class="mx-auto max-w-4xl">
+                <div class="flex flex-wrap items-end justify-between gap-3">
+                    <div><p class="text-xs font-black uppercase tracking-[0.18em] text-brand-green">Votre espace</p><h1 class="mt-1 text-2xl font-black">Mes billets</h1><p class="mt-1 text-sm text-gray-500">Retrouvez ici vos réservations et QR codes.</p></div>
+                    ${state.tickets.length ? '<button onclick="exportTickets()" class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold hover:bg-gray-50"><i class="fa-solid fa-download mr-2"></i>Exporter mes billets</button>' : ''}
+                </div>
+                <div class="mt-6 space-y-4">${state.tickets.length ? [...state.tickets].reverse().map(ticketCard).join('') : `<div class="rounded-2xl border border-dashed border-gray-300 bg-white px-5 py-14 text-center"><i class="fa-solid fa-ticket text-4xl text-gray-300"></i><h2 class="mt-4 text-lg font-black">Vous n’avez pas encore de billet</h2><p class="mt-1 text-sm text-gray-500">Parcourez les événements et réservez votre prochaine sortie.</p><button onclick="go('discover')" class="mt-5 rounded-xl bg-brand-yellow px-5 py-3 text-sm font-black">Découvrir les événements</button></div>`}</div>
+            </div>`;
+        }
+
+        function renderFavorites() {
+            const favoriteEvents = events.filter(event => state.favorites.includes(event.id));
+            return `<div>
+                <p class="text-xs font-black uppercase tracking-[0.18em] text-brand-green">À garder en vue</p>
+                <h1 class="mt-1 text-2xl font-black">Mes favoris</h1>
+                <p class="mt-1 text-sm text-gray-500">Les événements que vous avez enregistrés.</p>
+                <div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">${favoriteEvents.length ? renderEventList(favoriteEvents) : `<div class="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white px-5 py-12 text-center"><i class="fa-regular fa-heart text-3xl text-gray-300"></i><h2 class="mt-3 font-bold">Aucun favori pour le moment</h2><p class="mt-1 text-sm text-gray-500">Touchez le cœur d’un événement pour le retrouver ici.</p><button onclick="go('discover')" class="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-bold text-white">Explorer les événements</button></div>`}</div>
+            </div>`;
+        }
+
+        function renderProfile() {
+            const firstName = escapeHtml((state.customerName || 'Votre profil').split(' ')[0]);
+            return `<div class="mx-auto max-w-3xl">
+                <p class="text-xs font-black uppercase tracking-[0.18em] text-brand-green">Espace personnel</p>
+                <h1 class="mt-1 text-2xl font-black">Bonjour ${firstName}</h1>
+                <p class="mt-1 text-sm text-gray-500">Gérez vos informations et vos préférences.</p>
+                <form onsubmit="saveProfile(event)" class="mt-6 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+                    <h2 class="font-black">Mes coordonnées</h2>
+                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                        <label class="text-sm font-semibold">Nom complet<input id="profile-name" required minlength="2" value="${escapeHtml(state.customerName)}" class="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-3 outline-none focus:border-brand-yellow"></label>
+                        <label class="text-sm font-semibold">Téléphone<input id="profile-phone" required minlength="8" value="${escapeHtml(state.customerPhone)}" class="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-3 outline-none focus:border-brand-yellow"></label>
+                    </div>
+                    <button class="mt-4 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-gray-700">Enregistrer mon profil</button>
+                </form>
+                <div class="mt-4 divide-y divide-gray-100 rounded-2xl border border-gray-200 bg-white">
+                    <button onclick="go('favorites')" class="flex w-full items-center gap-3 p-4 text-left hover:bg-gray-50"><i class="fa-regular fa-heart w-5 text-center text-brand-red"></i><span class="flex-1 text-sm font-bold">Mes favoris</span><span class="text-xs text-gray-400">${state.favorites.length}</span><i class="fa-solid fa-chevron-right text-xs text-gray-400"></i></button>
+                    <button onclick="go('preferences')" class="flex w-full items-center gap-3 p-4 text-left hover:bg-gray-50"><i class="fa-regular fa-bell w-5 text-center text-brand-yellow"></i><span class="flex-1 text-sm font-bold">Préférences de notification</span><i class="fa-solid fa-chevron-right text-xs text-gray-400"></i></button>
+                    <button onclick="go('organizer')" class="flex w-full items-center gap-3 p-4 text-left hover:bg-gray-50"><i class="fa-solid fa-calendar-plus w-5 text-center text-brand-green"></i><span class="flex-1 text-sm font-bold">${state.organizerRequest ? 'Espace organisateur' : 'Devenir organisateur'}</span><i class="fa-solid fa-chevron-right text-xs text-gray-400"></i></button>
+                    <button onclick="resetDemo()" class="flex w-full items-center gap-3 p-4 text-left text-brand-red hover:bg-red-50"><i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i><span class="flex-1 text-sm font-bold">Réinitialiser la démo</span><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                </div>
+                <p class="mt-4 text-center text-xs text-gray-400">Prototype BeninVibes · Les données sont enregistrées localement sur cet appareil.</p>
+            </div>`;
+        }
+
+        function renderPreferences() {
+            return `<div class="mx-auto max-w-2xl">
+                <button onclick="go('profile')" class="mb-4 inline-flex items-center gap-2 text-sm font-bold text-gray-600"><i class="fa-solid fa-arrow-left"></i> Mon profil</button>
+                <h1 class="text-2xl font-black">Préférences de notification</h1>
+                <p class="mt-1 text-sm text-gray-500">Choisissez les alertes que vous souhaitez recevoir dans ce prototype.</p>
+                <div class="mt-5 rounded-2xl border border-gray-200 bg-white p-5">
+                    <div class="flex items-center justify-between gap-4">
+                        <div><h2 class="font-bold">Notifications BeninVibes</h2><p class="mt-1 text-xs text-gray-500">Nouveaux événements, rappels et actualités.</p></div>
+                        <button role="switch" aria-checked="${state.notificationsEnabled}" onclick="toggleNotifications()" class="h-7 w-12 rounded-full p-1 transition ${state.notificationsEnabled ? 'bg-brand-green' : 'bg-gray-300'}"><span class="block h-5 w-5 rounded-full bg-white transition ${state.notificationsEnabled ? 'translate-x-5' : ''}"></span></button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderOrganizer() {
+            if (!state.organizerRequest) {
+                return `<div class="mx-auto max-w-2xl">
+                    <button onclick="go('profile')" class="mb-4 inline-flex items-center gap-2 text-sm font-bold text-gray-600"><i class="fa-solid fa-arrow-left"></i> Mon profil</button>
+                    <div class="rounded-3xl bg-gray-900 p-6 text-white sm:p-8"><span class="rounded-full bg-brand-yellow px-3 py-1 text-xs font-black text-gray-900">Organisateurs</span><h1 class="mt-4 text-2xl font-black sm:text-3xl">Faites vivre vos événements avec BeninVibes</h1><p class="mt-3 text-sm leading-6 text-gray-300">Présentez votre événement, gérez vos réservations et retrouvez vos participants au même endroit.</p></div>
+                    <form onsubmit="submitOrganizerRequest(event)" class="mt-5 rounded-2xl border border-gray-200 bg-white p-5">
+                        <h2 class="font-black">Demande d’accès organisateur</h2>
+                        <label class="mt-4 block text-sm font-semibold">Nom de l’organisation<input id="organizer-name" required class="mt-1.5 w-full rounded-xl border border-gray-200 px-3 py-3 outline-none focus:border-brand-yellow" placeholder="Ex. Cotonou Live Prod"></label>
+                        <label class="mt-4 block text-sm font-semibold">Ville principale<select id="organizer-city" class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3 py-3"><option>Cotonou</option><option>Porto-Novo</option><option>Parakou</option><option>Ouidah</option><option>Abomey</option></select></label>
+                        <button class="mt-4 rounded-xl bg-brand-yellow px-4 py-3 text-sm font-black">Envoyer ma demande</button>
+                    </form>
+                </div>`;
+            }
+            return `<div class="mx-auto max-w-4xl">
+                <button onclick="go('profile')" class="mb-4 inline-flex items-center gap-2 text-sm font-bold text-gray-600"><i class="fa-solid fa-arrow-left"></i> Mon profil</button>
+                <div class="flex flex-wrap items-end justify-between gap-3"><div><p class="text-xs font-black uppercase tracking-[0.18em] text-brand-green">Espace organisateur</p><h1 class="mt-1 text-2xl font-black">Tableau de bord</h1><p class="mt-1 text-sm text-gray-500">Outils de démonstration pour la gestion de vos participants.</p></div><span class="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-brand-green"><i class="fa-solid fa-circle-check mr-1"></i>Accès démo activé</span></div>
+                <div class="mt-5 grid gap-4 sm:grid-cols-3">
+                    <div class="rounded-2xl bg-white p-5 shadow-sm"><p class="text-xs font-bold uppercase text-gray-400">Billets vendus</p><p class="mt-2 text-2xl font-black">${state.tickets.reduce((sum, ticket) => sum + ticket.quantity, 0)}</p></div>
+                    <div class="rounded-2xl bg-white p-5 shadow-sm"><p class="text-xs font-bold uppercase text-gray-400">Participants</p><p class="mt-2 text-2xl font-black">${state.tickets.reduce((sum, ticket) => sum + ticket.quantity, 0)}</p></div>
+                    <div class="rounded-2xl bg-white p-5 shadow-sm"><p class="text-xs font-bold uppercase text-gray-400">Solde simulé</p><p class="mt-2 text-2xl font-black text-brand-green">${money(state.tickets.reduce((sum, ticket) => sum + ticket.total, 0) * 0.95)}</p></div>
+                </div>
+                <div class="mt-5 rounded-2xl border border-gray-200 bg-white p-5">
+                    <h2 class="font-black">Outils participants</h2>
+                    <p class="mt-1 text-sm text-gray-500">Exportez les achats de cette démo ou vérifiez un code billet.</p>
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <button onclick="exportTickets()" class="rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white hover:bg-gray-700"><i class="fa-solid fa-file-csv mr-2"></i>Exporter les participants (CSV)</button>
+                        <button onclick="openScanner()" class="rounded-xl bg-brand-yellow px-4 py-3 text-sm font-black"><i class="fa-solid fa-qrcode mr-2"></i>Vérifier un billet</button>
+                    </div>
+                    <div id="scanner" class="mt-4 hidden rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
+                        <h3 class="font-bold">Vérification manuelle du billet</h3>
+                        <p class="mt-1 text-xs text-gray-500">Saisissez l’identifiant d’un billet acheté dans ce prototype.</p>
+                        <div class="mt-3 flex flex-col gap-2 sm:flex-row"><input id="scan-code" class="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm" placeholder="Ex. BNV-ABC123"><button onclick="validateTicket()" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-bold text-white">Vérifier</button></div>
+                        <p id="scan-result" class="mt-3 hidden rounded-lg p-3 text-sm font-bold" role="status"></p>
+                    </div>
+                    <p class="mt-4 text-xs text-gray-400">La lecture caméra et les paiements réels ne sont pas activés dans ce prototype.</p>
+                </div>
+            </div>`;
+        }
+
+        function render() {
+            const screens = {
+                discover: renderDiscover,
+                detail: renderDetail,
+                checkout: renderCheckout,
+                tickets: renderTickets,
+                favorites: renderFavorites,
+                profile: renderProfile,
+                preferences: renderPreferences,
+                organizer: renderOrganizer
+            };
+            const renderScreen = screens[state.screen] || renderDiscover;
+            document.getElementById('app').innerHTML = renderScreen();
+            document.querySelectorAll('.nav-button').forEach(button => {
+                const active = button.dataset.screen === state.screen || (state.screen === 'detail' || state.screen === 'checkout') && button.dataset.screen === 'discover';
+                button.classList.toggle('bg-amber-50', active);
+                button.classList.toggle('text-gray-900', active);
+                button.classList.toggle('text-gray-500', !active);
+                button.classList.toggle('text-brand-yellow', active && button.closest('nav')?.classList.contains('md:hidden'));
+            });
+        }
+
+        function resetFilters() {
+            state.search = '';
+            state.selectedCity = 'Toutes les villes';
+            state.selectedCategory = 'Tous';
+            render();
+        }
+
+        function updateSearch(value) {
+            state.search = value;
+            const grid = document.getElementById('event-grid');
+            if (grid) grid.innerHTML = renderEventList(filteredEvents());
+            const count = document.querySelector('[data-event-count]');
+            if (count) count.textContent = `${filteredEvents().length} événement(s)`;
+        }
+
+        function setCity(city) {
+            state.selectedCity = city;
+            render();
+        }
+
+        function setCategory(category) {
+            state.selectedCategory = category;
+            render();
+        }
+
+        function selectTicket(type) {
+            state.ticketType = type;
+            saveState();
+            render();
+        }
+
+        function changeQuantity(amount) {
+            state.quantity = Math.max(1, Math.min(10, state.quantity + amount));
+            render();
+        }
+
+        async function shareEvent(eventId) {
+            const link = `${location.origin}${location.pathname}#event-${eventId}`;
+            try {
+                await navigator.clipboard.writeText(link);
+                showToast('Lien de l’événement copié.');
+            } catch (error) {
+                console.warn('Le presse-papiers est indisponible.', error);
+                window.prompt('Copiez le lien de cet événement :', link);
+            }
+        }
+
+        function submitPayment(event) {
+            event.preventDefault();
+            const name = document.getElementById('customer-name').value.trim();
+            const phone = document.getElementById('customer-phone').value.trim();
+            const selected = selectedEvent();
+            if (!selected || name.length < 2 || phone.replace(/\D/g, '').length < 8) {
+                showToast('Vérifiez votre nom et votre numéro de téléphone.');
+                return;
+            }
+            state.customerName = name;
+            state.customerPhone = phone;
+            const unitPrice = state.ticketType === 'VIP' ? selected.priceVip : selected.priceStandard;
+            const total = (unitPrice + 500) * state.quantity;
+            const id = `BNV-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+            state.tickets.push({
+                id,
+                eventId: selected.id,
+                type: state.ticketType,
+                quantity: state.quantity,
+                total,
+                paymentMethod: state.paymentMethod,
+                buyerName: name,
+                createdAt: new Date().toISOString()
+            });
+            state.screen = 'tickets';
+            state.quantity = 1;
+            saveState();
+            render();
+            showToast('Paiement simulé avec succès : votre billet est prêt.');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function saveProfile(event) {
+            event.preventDefault();
+            state.customerName = document.getElementById('profile-name').value.trim();
+            state.customerPhone = document.getElementById('profile-phone').value.trim();
+            saveState();
+            render();
+            showToast('Votre profil a été mis à jour.');
+        }
+
+        function toggleNotifications() {
+            state.notificationsEnabled = !state.notificationsEnabled;
+            saveState();
+            render();
+        }
+
+        function submitOrganizerRequest(event) {
+            event.preventDefault();
+            const organization = document.getElementById('organizer-name').value.trim();
+            const city = document.getElementById('organizer-city').value;
+            if (!organization) {
+                showToast('Saisissez le nom de votre organisation.');
+                return;
+            }
+            state.organizerRequest = true;
+            state.organizerName = organization;
+            state.organizerCity = city;
+            saveState();
+            render();
+            showToast('Demande de démonstration enregistrée.');
+        }
+
+        function openScanner() {
+            document.getElementById('scanner')?.classList.remove('hidden');
+            document.getElementById('scan-code')?.focus();
+        }
+
+        function validateTicket() {
+            const code = document.getElementById('scan-code').value.trim().toUpperCase();
+            const result = document.getElementById('scan-result');
+            const ticket = state.tickets.find(item => item.id.toUpperCase() === code);
+            result.className = `mt-3 rounded-lg p-3 text-sm font-bold ${ticket ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`;
+            result.textContent = ticket ? `Billet valide · ${ticket.buyerName} · ${ticket.type}` : 'Billet introuvable dans les achats de cette démo.';
+        }
+
+        function exportTickets() {
+            if (!state.tickets.length) {
+                showToast('Aucun billet à exporter pour le moment.');
+                return;
+            }
+            const rows = [['Identifiant', 'Événement', 'Billet', 'Quantité', 'Acheteur', 'Téléphone', 'Total', 'Paiement']];
+            state.tickets.forEach(ticket => {
+                const event = events.find(item => item.id === ticket.eventId);
+                rows.push([ticket.id, event?.title || '', ticket.type, ticket.quantity, ticket.buyerName, state.customerPhone, ticket.total, ticket.paymentMethod]);
+            });
+            const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(';')).join('\n');
+            const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = 'beninvibes-billets.csv';
+            anchor.click();
+            URL.revokeObjectURL(url);
+            showToast('Export CSV téléchargé.');
+        }
+
+        function resetDemo() {
+            if (!window.confirm('Effacer les favoris, billets et préférences enregistrés sur cet appareil ?')) return;
+            localStorage.removeItem(storageKey);
+            window.location.reload();
+        }
+
+        render();
+    </script>
+</body>
+</html>
